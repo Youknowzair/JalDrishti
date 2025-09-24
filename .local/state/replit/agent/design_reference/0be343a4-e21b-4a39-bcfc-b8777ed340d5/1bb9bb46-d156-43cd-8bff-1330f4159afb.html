@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rural Water Management Platform</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#1976D2',
+                        secondary: '#388E3C',
+                        warning: '#F57C00',
+                        error: '#D32F2F',
+                        surface: '#FAFAFA'
+                    },
+                    fontFamily: {
+                        'inter': ['Inter', 'sans-serif']
+                    }
+                }
+            }
+        };
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        .leaflet-container {
+            height: 400px;
+            width: 100%;
+        }
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+        }
+        .btn-fab {
+            box-shadow: 0 4px 12px rgba(25, 118, 210, 0.3);
+        }
+        .card-elevated {
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body class="font-inter bg-gray-50">
+    <!-- @COMPONENT: AppShell [navigation and layout wrapper] -->
+    <div id="app" class="min-h-screen">
+        <!-- Header with Language Toggle and User Menu -->
+        <header class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center h-16">
+                    <div class="flex items-center space-x-4">
+                        <div class="flex items-center space-x-2">
+                            <i class="fas fa-tint text-primary text-2xl"></i>
+                            <h1 class="text-xl font-semibold text-gray-900">जल संरक्षण | Water Guard</h1>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center space-x-4">
+                        <!-- Language Toggle -->
+                        <button class="flex items-center space-x-2 px-3 py-1 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors">
+                            <i class="fas fa-globe text-gray-600"></i>
+                            <span class="text-sm font-medium text-gray-700" data-mock="true">EN/हिं</span>
+                        </button>
+                        
+                        <!-- User Profile -->
+                        <div class="flex items-center space-x-2">
+                            <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=40&h=40" 
+                                 alt="User profile" class="w-8 h-8 rounded-full object-cover" data-mock-image="true">
+                            <span class="text-sm font-medium text-gray-700" data-bind="user.name" data-mock="true">राज पटेल</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Navigation Tabs for Different User Roles -->
+        <nav class="bg-white border-b border-gray-200">
+            <div class="max-w-7xl mx-auto px-4">
+                <div class="flex space-x-8 overflow-x-auto">
+                    <button class="py-4 px-1 border-b-2 border-primary font-medium text-sm text-primary whitespace-nowrap" 
+                            data-role="community">
+                        समुदाय | Community
+                    </button>
+                    <button class="py-4 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 whitespace-nowrap"
+                            data-role="agent">
+                        एजेंट | Field Agent
+                    </button>
+                    <button class="py-4 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 whitespace-nowrap"
+                            data-role="admin">
+                        प्रशासक | Admin
+                    </button>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content Area -->
+        <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            
+            <!-- Community Member View -->
+            <div id="community-view" class="role-view">
+                <div class="text-center mb-8">
+                    <h2 class="text-2xl font-semibold text-gray-900 mb-2">स्वागत है | Welcome</h2>
+                    <p class="text-gray-600">अपने पानी की समस्याओं को रिपोर्ट करें | Report your water issues</p>
+                </div>
+
+                <!-- Quick Action Cards -->
+                <div class="grid md:grid-cols-2 gap-6 mb-8">
+                    <!-- Report Problem Card -->
+                    <div class="card-elevated bg-white rounded-xl p-6 hover:shadow-lg transition-shadow cursor-pointer"
+                         data-event="click:openReportModal">
+                        <div class="flex items-center justify-center w-16 h-16 bg-red-100 rounded-full mb-4 mx-auto">
+                            <i class="fas fa-exclamation-triangle text-error text-2xl"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold text-center mb-2">समस्या रिपोर्ट करें</h3>
+                        <p class="text-gray-600 text-center mb-4">Report Water Problem</p>
+                        <button class="w-full bg-error text-white py-3 px-6 rounded-lg font-medium hover:bg-red-700 transition-colors">
+                            रिपोर्ट करें | Report Now
+                        </button>
+                    </div>
+
+                    <!-- View Updates Card -->
+                    <div class="card-elevated bg-white rounded-xl p-6 hover:shadow-lg transition-shadow cursor-pointer"
+                         data-event="click:viewUpdates">
+                        <div class="flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4 mx-auto">
+                            <i class="fas fa-bell text-primary text-2xl"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold text-center mb-2">स्थानीय अपडेट</h3>
+                        <p class="text-gray-600 text-center mb-4">View Local Updates</p>
+                        <button class="w-full bg-primary text-white py-3 px-6 rounded-lg font-medium hover:bg-blue-700 transition-colors">
+                            अपडेट देखें | View Updates
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Recent Reports Status -->
+                <div class="card-elevated bg-white rounded-xl p-6">
+                    <h3 class="text-lg font-semibold mb-4">आपकी रिपोर्ट्स | Your Reports</h3>
+                    <div class="space-y-4" data-mock="true">
+                        <!-- @MAP: userReports.map(report => ( -->
+                        <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                            <div class="flex items-center space-x-3">
+                                <span class="status-indicator bg-warning"></span>
+                                <div>
+                                    <p class="font-medium">हैंडपंप खराब | Handpump Broken</p>
+                                    <p class="text-sm text-gray-600">2 दिन पहले | 2 days ago</p>
+                                </div>
+                            </div>
+                            <span class="px-3 py-1 bg-warning text-white text-sm rounded-full">प्रगति में | In Progress</span>
+                        </div>
+                        
+                        <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                            <div class="flex items-center space-x-3">
+                                <span class="status-indicator bg-secondary"></span>
+                                <div>
+                                    <p class="font-medium">पानी की गुणवत्ता | Water Quality</p>
+                                    <p class="text-sm text-gray-600">1 सप्ताह पहले | 1 week ago</p>
+                                </div>
+                            </div>
+                            <span class="px-3 py-1 bg-secondary text-white text-sm rounded-full">हल हो गया | Resolved</span>
+                        </div>
+                        <!-- @END_MAP )) -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Field Agent View -->
+            <div id="agent-view" class="role-view hidden">
+                <div class="grid lg:grid-cols-3 gap-6">
+                    <!-- Map Section -->
+                    <div class="lg:col-span-2">
+                        <div class="card-elevated bg-white rounded-xl p-6">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-lg font-semibold">असाइन किए गए क्षेत्र | Assigned Areas</h3>
+                                <button class="text-primary hover:text-blue-700" data-event="click:syncOfflineData">
+                                    <i class="fas fa-sync-alt mr-2"></i>
+                                    Sync Data
+                                </button>
+                            </div>
+                            <!-- Interactive Map -->
+                            <div id="agentMap" class="leaflet-container rounded-lg"></div>
+                        </div>
+
+                        <!-- Water Testing Form -->
+                        <div class="card-elevated bg-white rounded-xl p-6 mt-6">
+                            <h3 class="text-lg font-semibold mb-4">जल गुणवत्ता परीक्षण | Water Quality Testing</h3>
+                            <form class="grid md:grid-cols-2 gap-4" data-implementation="Form validation with Formik + Yup">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">स्थान | Location</label>
+                                    <input type="text" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" 
+                                           placeholder="GPS coordinates auto-filled" data-bind="gps.coordinates" data-mock="true" value="23.0225° N, 72.5714° E">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">pH Level</label>
+                                    <input type="number" step="0.1" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" 
+                                           placeholder="7.0" data-mock="true">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">TDS (mg/L)</label>
+                                    <input type="number" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" 
+                                           placeholder="500" data-mock="true">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Contamination Level</label>
+                                    <select class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" data-mock="true">
+                                        <option>Safe</option>
+                                        <option>Moderate</option>
+                                        <option>High</option>
+                                    </select>
+                                </div>
+                                <div class="md:col-span-2">
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">फोटो अपलोड | Photo Upload</label>
+                                    <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center" data-implementation="File upload with preview">
+                                        <i class="fas fa-camera text-4xl text-gray-400 mb-2"></i>
+                                        <p class="text-gray-600">Click to upload water source photo</p>
+                                    </div>
+                                </div>
+                                <div class="md:col-span-2">
+                                    <button type="submit" class="w-full bg-primary text-white py-3 px-6 rounded-lg font-medium hover:bg-blue-700 transition-colors">
+                                        टेस्ट रिपोर्ट सबमिट करें | Submit Test Report
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Task List Sidebar -->
+                    <div class="space-y-6">
+                        <!-- Task Summary -->
+                        <div class="card-elevated bg-white rounded-xl p-6">
+                            <h3 class="text-lg font-semibold mb-4">आज के कार्य | Today's Tasks</h3>
+                            <div class="space-y-3" data-mock="true">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm text-gray-600">कुल कार्य | Total Tasks</span>
+                                    <span class="font-semibold text-xl" data-bind="tasks.total">12</span>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm text-gray-600">पूर्ण | Completed</span>
+                                    <span class="font-semibold text-xl text-secondary" data-bind="tasks.completed">8</span>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm text-gray-600">लंबित | Pending</span>
+                                    <span class="font-semibold text-xl text-warning" data-bind="tasks.pending">4</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Pending Tasks -->
+                        <div class="card-elevated bg-white rounded-xl p-6">
+                            <h3 class="text-lg font-semibold mb-4">लंबित कार्य | Pending Tasks</h3>
+                            <div class="space-y-3" data-mock="true">
+                                <!-- @MAP: pendingTasks.map(task => ( -->
+                                <div class="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                                    <div class="flex items-center space-x-2 mb-2">
+                                        <span class="status-indicator bg-warning"></span>
+                                        <span class="font-medium text-sm">हैंडपंप निरीक्षण</span>
+                                    </div>
+                                    <p class="text-xs text-gray-600">Village: Rampur</p>
+                                    <p class="text-xs text-gray-600">Priority: High</p>
+                                </div>
+                                
+                                <div class="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                                    <div class="flex items-center space-x-2 mb-2">
+                                        <span class="status-indicator bg-primary"></span>
+                                        <span class="font-medium text-sm">जल गुणवत्ता जांच</span>
+                                    </div>
+                                    <p class="text-xs text-gray-600">Village: Sundarpur</p>
+                                    <p class="text-xs text-gray-600">Priority: Medium</p>
+                                </div>
+                                <!-- @END_MAP )) -->
+                            </div>
+                        </div>
+
+                        <!-- Offline Status -->
+                        <div class="card-elevated bg-white rounded-xl p-6">
+                            <div class="flex items-center space-x-3 mb-4">
+                                <div class="w-3 h-3 bg-secondary rounded-full"></div>
+                                <span class="font-medium text-sm">ऑफलाइन मोड | Offline Mode</span>
+                            </div>
+                            <p class="text-xs text-gray-600 mb-3">5 reports stored locally</p>
+                            <button class="w-full bg-gray-100 text-gray-700 py-2 px-4 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors"
+                                    data-event="click:syncOfflineData">
+                                <i class="fas fa-cloud-upload-alt mr-2"></i>
+                                Sync When Online
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Admin Dashboard View -->
+            <div id="admin-view" class="role-view hidden">
+                <!-- Dashboard Stats -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                    <div class="card-elevated bg-white rounded-xl p-6 text-center" data-mock="true">
+                        <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                            <i class="fas fa-map-marked-alt text-primary text-xl"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold text-gray-900" data-bind="stats.hamlets">156</h3>
+                        <p class="text-sm text-gray-600">गांव | Hamlets</p>
+                    </div>
+                    
+                    <div class="card-elevated bg-white rounded-xl p-6 text-center" data-mock="true">
+                        <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                            <i class="fas fa-tint text-secondary text-xl"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold text-gray-900" data-bind="stats.assets">1,247</h3>
+                        <p class="text-sm text-gray-600">जल स्रोत | Water Assets</p>
+                    </div>
+                    
+                    <div class="card-elevated bg-white rounded-xl p-6 text-center" data-mock="true">
+                        <div class="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                            <i class="fas fa-exclamation-triangle text-warning text-xl"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold text-gray-900" data-bind="stats.pending">23</h3>
+                        <p class="text-sm text-gray-600">लंबित मुद्दे | Pending Issues</p>
+                    </div>
+                    
+                    <div class="card-elevated bg-white rounded-xl p-6 text-center" data-mock="true">
+                        <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                            <i class="fas fa-chart-line text-error text-xl"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold text-gray-900" data-bind="stats.predictions">7</h3>
+                        <p class="text-sm text-gray-600">AI अलर्ट | AI Alerts</p>
+                    </div>
+                </div>
+
+                <div class="grid lg:grid-cols-3 gap-6">
+                    <!-- Regional Map -->
+                    <div class="lg:col-span-2">
+                        <div class="card-elevated bg-white rounded-xl p-6">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-lg font-semibold">क्षेत्रीय मानचित्र | Regional Map</h3>
+                                <div class="flex space-x-2">
+                                    <button class="px-3 py-1 bg-blue-100 text-primary text-sm rounded-full">Assets</button>
+                                    <button class="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full">Predictions</button>
+                                    <button class="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full">Equity</button>
+                                </div>
+                            </div>
+                            <div id="adminMap" class="leaflet-container rounded-lg"></div>
+                        </div>
+
+                        <!-- AI Predictions Panel -->
+                        <div class="card-elevated bg-white rounded-xl p-6 mt-6">
+                            <h3 class="text-lg font-semibold mb-4">AI भविष्यवाणी | AI Predictions</h3>
+                            <div class="space-y-4" data-mock="true">
+                                <!-- @MAP: predictions.map(prediction => ( -->
+                                <div class="p-4 bg-red-50 border border-red-200 rounded-lg">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <div class="flex items-center space-x-2">
+                                            <i class="fas fa-exclamation-triangle text-error"></i>
+                                            <span class="font-medium">जल संकट चेतावनी | Water Crisis Alert</span>
+                                        </div>
+                                        <span class="text-xs text-gray-600">72% confidence</span>
+                                    </div>
+                                    <p class="text-sm text-gray-700">Rampur village predicted water shortage in 15 days</p>
+                                    <div class="mt-3 flex space-x-2">
+                                        <button class="px-3 py-1 bg-error text-white text-xs rounded-full">Alert Sent</button>
+                                        <button class="px-3 py-1 bg-gray-200 text-gray-700 text-xs rounded-full">View Details</button>
+                                    </div>
+                                </div>
+                                
+                                <div class="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <div class="flex items-center space-x-2">
+                                            <i class="fas fa-flask text-warning"></i>
+                                            <span class="font-medium">गुणवत्ता चेतावनी | Quality Alert</span>
+                                        </div>
+                                        <span class="text-xs text-gray-600">85% confidence</span>
+                                    </div>
+                                    <p class="text-sm text-gray-700">Sundarpur contamination risk detected</p>
+                                    <div class="mt-3 flex space-x-2">
+                                        <button class="px-3 py-1 bg-warning text-white text-xs rounded-full">Investigation Pending</button>
+                                        <button class="px-3 py-1 bg-gray-200 text-gray-700 text-xs rounded-full">View Details</button>
+                                    </div>
+                                </div>
+                                <!-- @END_MAP )) -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Sidebar -->
+                    <div class="space-y-6">
+                        <!-- Quick Actions -->
+                        <div class="card-elevated bg-white rounded-xl p-6">
+                            <h3 class="text-lg font-semibold mb-4">त्वरित कार्य | Quick Actions</h3>
+                            <div class="space-y-3">
+                                <button class="w-full flex items-center space-x-3 p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors"
+                                        data-event="click:exportReports">
+                                    <i class="fas fa-download text-primary"></i>
+                                    <span class="text-sm font-medium">Export Reports</span>
+                                </button>
+                                <button class="w-full flex items-center space-x-3 p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors"
+                                        data-event="click:manageUsers">
+                                    <i class="fas fa-users text-primary"></i>
+                                    <span class="text-sm font-medium">Manage Users</span>
+                                </button>
+                                <button class="w-full flex items-center space-x-3 p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors"
+                                        data-event="click:assignTasks">
+                                    <i class="fas fa-tasks text-primary"></i>
+                                    <span class="text-sm font-medium">Assign Tasks</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Recent Reports -->
+                        <div class="card-elevated bg-white rounded-xl p-6">
+                            <h3 class="text-lg font-semibold mb-4">हाल की रिपोर्ट्स | Recent Reports</h3>
+                            <div class="space-y-3" data-mock="true">
+                                <!-- @MAP: recentReports.map(report => ( -->
+                                <div class="p-3 bg-gray-50 rounded-lg">
+                                    <div class="flex items-center space-x-2 mb-1">
+                                        <span class="status-indicator bg-error"></span>
+                                        <span class="font-medium text-sm">हैंडपंप खराब</span>
+                                    </div>
+                                    <p class="text-xs text-gray-600">Rampur - 2 घंटे पहले</p>
+                                    <p class="text-xs text-gray-600">Reported by: राज पटेल</p>
+                                </div>
+                                
+                                <div class="p-3 bg-gray-50 rounded-lg">
+                                    <div class="flex items-center space-x-2 mb-1">
+                                        <span class="status-indicator bg-warning"></span>
+                                        <span class="font-medium text-sm">जल गुणवत्ता</span>
+                                    </div>
+                                    <p class="text-xs text-gray-600">Sundarpur - 4 घंटे पहले</p>
+                                    <p class="text-xs text-gray-600">Reported by: Agent 23</p>
+                                </div>
+                                
+                                <div class="p-3 bg-gray-50 rounded-lg">
+                                    <div class="flex items-center space-x-2 mb-1">
+                                        <span class="status-indicator bg-secondary"></span>
+                                        <span class="font-medium text-sm">नया स्रोत</span>
+                                    </div>
+                                    <p class="text-xs text-gray-600">Greenfield - 1 दिन पहले</p>
+                                    <p class="text-xs text-gray-600">Added by: Agent 15</p>
+                                </div>
+                                <!-- @END_MAP )) -->
+                            </div>
+                        </div>
+
+                        <!-- Equity Analysis -->
+                        <div class="card-elevated bg-white rounded-xl p-6">
+                            <h3 class="text-lg font-semibold mb-4">इक्विटी विश्लेषण | Equity Analysis</h3>
+                            <div class="space-y-4" data-mock="true">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm text-gray-600">High Priority Areas</span>
+                                    <span class="font-semibold text-error" data-bind="equity.high">12</span>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm text-gray-600">Medium Priority</span>
+                                    <span class="font-semibold text-warning" data-bind="equity.medium">28</span>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm text-gray-600">Well Served</span>
+                                    <span class="font-semibold text-secondary" data-bind="equity.good">116</span>
+                                </div>
+                                <button class="w-full bg-primary text-white py-2 px-4 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors mt-4">
+                                    View Heatmap
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Bottom Navigation for Mobile -->
+        <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 md:hidden">
+            <div class="flex justify-around py-2">
+                <button class="flex flex-col items-center py-2 px-3 text-primary" data-event="click:switchRole" data-role="community">
+                    <i class="fas fa-home text-xl mb-1"></i>
+                    <span class="text-xs">समुदाय</span>
+                </button>
+                <button class="flex flex-col items-center py-2 px-3 text-gray-500" data-event="click:switchRole" data-role="agent">
+                    <i class="fas fa-map-marker-alt text-xl mb-1"></i>
+                    <span class="text-xs">एजेंट</span>
+                </button>
+                <button class="flex flex-col items-center py-2 px-3 text-gray-500" data-event="click:switchRole" data-role="admin">
+                    <i class="fas fa-chart-bar text-xl mb-1"></i>
+                    <span class="text-xs">प्रशासक</span>
+                </button>
+            </div>
+        </nav>
+
+        <!-- Floating Action Button for Problem Reporting -->
+        <button class="fixed bottom-20 right-6 w-14 h-14 bg-error text-white rounded-full shadow-lg btn-fab hover:bg-red-700 transition-colors md:hidden"
+                data-event="click:openReportModal">
+            <i class="fas fa-plus text-xl"></i>
+        </button>
+    </div>
+    <!-- @END_COMPONENT: AppShell -->
+
+    <!-- Problem Reporting Modal -->
+    <!-- @COMPONENT: ProblemReportModal [modal for reporting water issues] -->
+    <div id="reportModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+            <div class="p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-xl font-semibold">समस्या रिपोर्ट करें | Report Problem</h3>
+                    <button class="text-gray-500 hover:text-gray-700" data-event="click:closeModal">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                
+                <form class="space-y-4" data-implementation="Form handling with validation">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">समस्या का प्रकार | Problem Type</label>
+                        <select class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" data-mock="true">
+                            <option>हैंडपंप खराब | Handpump Broken</option>
+                            <option>पानी की गुणवत्ता | Water Quality Issue</option>
+                            <option>पानी की कमी | Water Shortage</option>
+                            <option>पाइप लीकेज | Pipe Leakage</option>
+                            <option>अन्य | Other</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">विवरण | Description</label>
+                        <textarea class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent h-20" 
+                                  placeholder="समस्या का विस्तार से वर्णन करें | Describe the problem in detail" data-mock="true"></textarea>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">स्थान | Location</label>
+                        <div class="flex items-center space-x-2">
+                            <input type="text" class="flex-1 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" 
+                                   placeholder="GPS location auto-detected" data-bind="location.auto" data-mock="true" value="Current Location">
+                            <button type="button" class="px-4 py-3 bg-gray-100 border border-gray-300 rounded-lg hover:bg-gray-200">
+                                <i class="fas fa-crosshairs"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">फोटो | Photo</label>
+                        <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center" data-implementation="Camera integration for mobile devices">
+                            <i class="fas fa-camera text-4xl text-gray-400 mb-2"></i>
+                            <p class="text-gray-600 text-sm">Tap to take photo</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex space-x-3 pt-4">
+                        <button type="button" class="flex-1 py-3 px-6 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors"
+                                data-event="click:closeModal">
+                            रद्द करें | Cancel
+                        </button>
+                        <button type="submit" class="flex-1 py-3 px-6 bg-error text-white rounded-lg font-medium hover:bg-red-700 transition-colors">
+                            रिपोर्ट करें | Submit Report
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <!-- @END_COMPONENT: ProblemReportModal -->
+
+    <script>
+        // @STATE: currentRole:string = 'community'
+        // @STATE: isOffline:boolean = false
+        // @STATE: userLocation:object = null
+        
+        (function() {
+            // Initialize maps when role tabs are switched
+            let agentMap = null;
+            let adminMap = null;
+            
+            // Role switching functionality
+            const roleButtons = document.querySelectorAll('[data-role]');
+            const roleViews = document.querySelectorAll('.role-view');
+            const bottomNavButtons = document.querySelectorAll('[data-event="click:switchRole"]');
+            
+            function switchRole(role) {
+                // Update nav buttons
+                roleButtons.forEach(btn => {
+                    if (btn.dataset.role === role) {
+                        btn.className = btn.className.replace('border-transparent text-gray-500', 'border-primary text-primary');
+                    } else {
+                        btn.className = btn.className.replace('border-primary text-primary', 'border-transparent text-gray-500');
+                    }
+                });
+                
+                // Update bottom nav
+                bottomNavButtons.forEach(btn => {
+                    if (btn.dataset.role === role) {
+                        btn.className = btn.className.replace('text-gray-500', 'text-primary');
+                    } else {
+                        btn.className = btn.className.replace('text-primary', 'text-gray-500');
+                    }
+                });
+                
+                // Show/hide views
+                roleViews.forEach(view => {
+                    if (view.id === `${role}-view`) {
+                        view.classList.remove('hidden');
+                        // Initialize maps when view becomes visible
+                        if (role === 'agent' && !agentMap) {
+                            initializeAgentMap();
+                        } else if (role === 'admin' && !adminMap) {
+                            initializeAdminMap();
+                        }
+                    } else {
+                        view.classList.add('hidden');
+                    }
+                });
+            }
+            
+            // Initialize agent map
+            function initializeAgentMap() {
+                agentMap = L.map('agentMap').setView([23.0225, 72.5714], 12);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(agentMap);
+                
+                // Add sample markers for water assets
+                const waterAssets = [
+                    {lat: 23.0225, lng: 72.5714, status: 'good', name: 'Handpump 1'},
+                    {lat: 23.0275, lng: 72.5764, status: 'warning', name: 'Handpump 2'},
+                    {lat: 23.0175, lng: 72.5664, status: 'error', name: 'Handpump 3'}
+                ];
+                
+                waterAssets.forEach(asset => {
+                    const color = asset.status === 'good' ? 'green' : asset.status === 'warning' ? 'orange' : 'red';
+                    L.circleMarker([asset.lat, asset.lng], {
+                        color: color,
+                        fillColor: color,
+                        fillOpacity: 0.7,
+                        radius: 8
+                    }).addTo(agentMap).bindPopup(`<strong>${asset.name}</strong><br>Status: ${asset.status}`);
+                });
+            }
+            
+            // Initialize admin map
+            function initializeAdminMap() {
+                adminMap = L.map('adminMap').setView([23.0225, 72.5714], 10);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(adminMap);
+                
+                // Add hamlet boundaries and predictions
+                const hamlets = [
+                    {lat: 23.0225, lng: 72.5714, risk: 'high', name: 'Rampur'},
+                    {lat: 23.0425, lng: 72.5914, risk: 'medium', name: 'Sundarpur'},
+                    {lat: 23.0025, lng: 72.5514, risk: 'low', name: 'Greenfield'}
+                ];
+                
+                hamlets.forEach(hamlet => {
+                    const color = hamlet.risk === 'high' ? '#D32F2F' : hamlet.risk === 'medium' ? '#F57C00' : '#388E3C';
+                    L.circle([hamlet.lat, hamlet.lng], {
+                        color: color,
+                        fillColor: color,
+                        fillOpacity: 0.3,
+                        radius: 1000
+                    }).addTo(adminMap).bindPopup(`<strong>${hamlet.name}</strong><br>Risk Level: ${hamlet.risk}`);
+                });
+            }
+            
+            // Event listeners
+            roleButtons.forEach(btn => {
+                btn.addEventListener('click', () => switchRole(btn.dataset.role));
+            });
+            
+            bottomNavButtons.forEach(btn => {
+                btn.addEventListener('click', () => switchRole(btn.dataset.role));
+            });
+            
+            // Modal handling
+            const reportModal = document.getElementById('reportModal');
+            const openModalButtons = document.querySelectorAll('[data-event="click:openReportModal"]');
+            const closeModalButtons = document.querySelectorAll('[data-event="click:closeModal"]');
+            
+            openModalButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    reportModal.classList.remove('hidden');
+                    // TODO: Auto-capture GPS coordinates
+                });
+            });
+            
+            closeModalButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    reportModal.classList.add('hidden');
+                });
+            });
+            
+            // Close modal on backdrop click
+            reportModal.addEventListener('click', (e) => {
+                if (e.target === reportModal) {
+                    reportModal.classList.add('hidden');
+                }
+            });
+            
+            // Initialize with community view
+            switchRole('community');
+            
+            // TODO: Implement offline data synchronization
+            // TODO: Implement form validation and submission
+            // TODO: Implement real-time notifications
+            // TODO: Implement GPS auto-capture
+            // TODO: Implement camera integration
+            // TODO: Implement multilingual content switching
+            // TODO: Implement PWA service worker for offline functionality
+        })();
+    </script>
+</body>
+</html>

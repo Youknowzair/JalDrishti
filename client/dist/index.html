@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+    <meta name="description" content="Rural Water Management Platform - Community-driven water resource monitoring, reporting, and management for sustainable rural development." />
+    <meta name="theme-color" content="#1976D2" />
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="जल संरक्षण | Water Guard - Rural Water Management Platform" />
+    <meta property="og:description" content="Community-driven water resource monitoring, reporting, and management for sustainable rural development." />
+    <meta property="og:image" content="/icon-512x512.png" />
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:title" content="जल संरक्षण | Water Guard - Rural Water Management Platform" />
+    <meta property="twitter:description" content="Community-driven water resource monitoring, reporting, and management for sustainable rural development." />
+    <meta property="twitter:image" content="/icon-512x512.png" />
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="apple-touch-icon" href="/icon-192x192.png" />
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+    
+    <!-- Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <title>जल संरक्षण | Water Guard - Rural Water Management Platform</title>
+    
+    <style>
+      /* Ensure proper styling for map components */
+      .leaflet-container {
+        font-family: 'Inter', sans-serif;
+      }
+      
+      /* Loading screen */
+      .app-loading {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, #E3F2FD 0%, #E8F5E8 100%);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+      }
+      
+      .app-loading.hidden {
+        display: none;
+      }
+      
+      /* Status indicators */
+      .status-indicator {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 8px;
+      }
+      
+      /* Card elevation effect */
+      .card-elevated {
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        transition: box-shadow 0.2s ease;
+      }
+      
+      .card-elevated:hover {
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+      }
+      
+      /* Floating action button */
+      .btn-fab {
+        box-shadow: 0 4px 12px rgba(25, 118, 210, 0.3);
+      }
+      
+      /* PWA install prompt styling */
+      .pwa-install-prompt {
+        position: fixed;
+        bottom: 20px;
+        left: 20px;
+        right: 20px;
+        background: white;
+        padding: 16px;
+        border-radius: 12px;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+        z-index: 1000;
+        display: none;
+      }
+      
+      @media (min-width: 768px) {
+        .pwa-install-prompt {
+          left: auto;
+          max-width: 400px;
+        }
+      }
+    </style>
+    <script type="module" crossorigin src="/assets/index-DTu6NV2U.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-BeYwqhZZ.css">
+  </head>
+  <body>
+    <!-- Loading Screen -->
+    <div id="app-loading" class="app-loading">
+      <div class="text-center">
+        <i class="fas fa-tint text-6xl text-blue-600 mb-4"></i>
+        <h1 class="text-2xl font-semibold text-gray-800 mb-2">जल संरक्षण | Water Guard</h1>
+        <p class="text-gray-600 mb-6">Loading...</p>
+        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+      </div>
+    </div>
+    
+    <!-- App Root -->
+    <div id="root"></div>
+    
+    <!-- PWA Install Prompt -->
+    <div id="pwa-install-prompt" class="pwa-install-prompt">
+      <div class="flex items-center justify-between mb-3">
+        <div class="flex items-center space-x-3">
+          <i class="fas fa-mobile-alt text-blue-600 text-xl"></i>
+          <div>
+            <h3 class="font-semibold text-sm">Install Water Guard</h3>
+            <p class="text-xs text-gray-600">Access offline & get notifications</p>
+          </div>
+        </div>
+        <button id="pwa-install-close" class="text-gray-400 hover:text-gray-600">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="flex space-x-2">
+        <button id="pwa-install-button" class="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg text-sm font-medium hover:bg-blue-700">
+          Install App
+        </button>
+        <button id="pwa-install-later" class="flex-1 bg-gray-100 text-gray-700 py-2 px-4 rounded-lg text-sm font-medium hover:bg-gray-200">
+          Maybe Later
+        </button>
+      </div>
+    </div>
+    
+    <!-- Scripts -->
+    
+    <!-- PWA Service Worker Registration -->
+    <script>
+      // Hide loading screen when app loads
+      window.addEventListener('load', () => {
+        setTimeout(() => {
+          const loading = document.getElementById('app-loading');
+          if (loading) {
+            loading.classList.add('hidden');
+          }
+        }, 100); // Reduced timeout for faster loading
+      });
+      
+      // Also hide loading when DOM content loads
+      document.addEventListener('DOMContentLoaded', () => {
+        setTimeout(() => {
+          const loading = document.getElementById('app-loading');
+          if (loading) {
+            loading.classList.add('hidden');
+          }
+        }, 500);
+      });
+      
+      // Service Worker Registration
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/public/sw.js')
+            .then((registration) => {
+              console.log('SW registered: ', registration);
+            })
+            .catch((registrationError) => {
+              console.log('SW registration failed: ', registrationError);
+            });
+        });
+      }
+      
+      // PWA Install Prompt
+      let deferredPrompt;
+      const installPrompt = document.getElementById('pwa-install-prompt');
+      const installButton = document.getElementById('pwa-install-button');
+      const installClose = document.getElementById('pwa-install-close');
+      const installLater = document.getElementById('pwa-install-later');
+      
+      window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        
+        // Show install prompt after a delay
+        setTimeout(() => {
+          if (installPrompt) {
+            installPrompt.style.display = 'block';
+          }
+        }, 5000);
+      });
+      
+      if (installButton) {
+        installButton.addEventListener('click', async () => {
+          if (deferredPrompt) {
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            console.log(`User response to the install prompt: ${outcome}`);
+            deferredPrompt = null;
+          }
+          if (installPrompt) {
+            installPrompt.style.display = 'none';
+          }
+        });
+      }
+      
+      if (installClose) {
+        installClose.addEventListener('click', () => {
+          if (installPrompt) {
+            installPrompt.style.display = 'none';
+          }
+        });
+      }
+      
+      if (installLater) {
+        installLater.addEventListener('click', () => {
+          if (installPrompt) {
+            installPrompt.style.display = 'none';
+          }
+          // Show again after 24 hours
+          localStorage.setItem('pwa-install-dismissed', Date.now().toString());
+        });
+      }
+      
+      // Check if user previously dismissed the prompt
+      const dismissed = localStorage.getItem('pwa-install-dismissed');
+      if (dismissed) {
+        const dismissedTime = parseInt(dismissed);
+        const oneDayInMs = 24 * 60 * 60 * 1000;
+        if (Date.now() - dismissedTime < oneDayInMs) {
+          // Don't show prompt if dismissed within last 24 hours
+          window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+          });
+        }
+      }
+    </script>
+    
+    <!-- PWA Manifest -->
+    <script>
+      // Create manifest dynamically to ensure proper paths
+      const manifest = {
+        name: "Water Guard - Rural Water Management",
+        short_name: "Water Guard",
+        description: "Community-driven water resource monitoring and management platform",
+        start_url: "/",
+        display: "standalone",
+        background_color: "#ffffff",
+        theme_color: "#1976D2",
+        orientation: "portrait-primary",
+        categories: ["utilities", "productivity", "government"],
+        icons: [
+          {
+            src: "data:image/svg+xml;base64," + btoa(`
+              <svg width="192" height="192" viewBox="0 0 192 192" xmlns="http://www.w3.org/2000/svg">
+                <rect width="192" height="192" fill="#1976D2" rx="24"/>
+                <path d="M96 40c-8 0-16 4-24 12-8 8-16 20-24 36s-8 32 0 44c8 12 16 20 24 20s16-8 24-20c8-12 8-28 0-44s-16-28-24-36c-8-8-16-12-24-12z" fill="#ffffff"/>
+                <circle cx="96" cy="96" r="4" fill="#1976D2"/>
+                <path d="M60 120h72v8H60z" fill="#ffffff" opacity="0.8"/>
+                <path d="M70 140h52v4H70z" fill="#ffffff" opacity="0.6"/>
+              </svg>
+            `),
+            sizes: "192x192",
+            type: "image/svg+xml"
+          },
+          {
+            src: "data:image/svg+xml;base64," + btoa(`
+              <svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+                <rect width="512" height="512" fill="#1976D2" rx="64"/>
+                <path d="M256 100c-20 0-40 10-60 30-20 20-40 50-60 90s-20 80 0 110c20 30 40 50 60 50s40-20 60-50c20-30 20-70 0-110s-40-70-60-90c-20-20-40-30-60-30z" fill="#ffffff"/>
+                <circle cx="256" cy="256" r="12" fill="#1976D2"/>
+                <path d="M160 320h192v20H160z" fill="#ffffff" opacity="0.8"/>
+                <path d="M190 370h132v12H190z" fill="#ffffff" opacity="0.6"/>
+              </svg>
+            `),
+            sizes: "512x512",
+            type: "image/svg+xml"
+          }
+        ]
+      };
+      
+      const manifestBlob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
+      const manifestURL = URL.createObjectURL(manifestBlob);
+      const link = document.createElement('link');
+      link.rel = 'manifest';
+      link.href = manifestURL;
+      document.head.appendChild(link);
+    </script>
+    
+  </body>
+</html>
