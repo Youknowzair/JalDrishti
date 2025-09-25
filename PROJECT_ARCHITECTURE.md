@@ -221,14 +221,14 @@ Census Data + Asset Data → Equity Analysis → Heatmaps → Recommendations
 - **Runtime**: Node.js with TypeScript
 - **Framework**: Express.js
 - **Database**: PostgreSQL with Drizzle ORM
-- **Authentication**: Replit Auth (configurable)
+- **Authentication**: JWT with role-based access control
 - **File Storage**: Local/cloud storage
 
 ### DevOps
 - **Build Tool**: Vite
 - **Package Manager**: npm
 - **Database Migrations**: Drizzle Kit
-- **Deployment**: Replit (configurable for other platforms)
+- **Deployment**: Flexible platform support
 
 ## Future Enhancements
 
@@ -267,8 +267,8 @@ Census Data + Asset Data → Equity Analysis → Heatmaps → Recommendations
 ## Deployment & Scaling
 
 ### Current Deployment
-- **Platform**: Replit (development)
-- **Database**: Neon PostgreSQL
+- **Platform**: Local development environment
+- **Database**: PostgreSQL with Drizzle ORM
 - **Storage**: Local file system
 
 ### Production Deployment

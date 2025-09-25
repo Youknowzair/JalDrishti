@@ -125,12 +125,12 @@ The platform includes demo access for testing different user roles:
 - **Node.js** with TypeScript
 - **Express.js** framework
 - **PostgreSQL** with Drizzle ORM
-- **Replit Auth** (configurable)
+- **JWT Authentication** with role-based access control
 
 ### DevOps
 - **Vite** for build tooling
 - **Drizzle Kit** for database migrations
-- **Replit** deployment (configurable)
+- **Flexible deployment** (supports various platforms)
 
 ## 📊 Features by User Role
 

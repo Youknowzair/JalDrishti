@@ -18,6 +18,14 @@ npm run build
 npm run preview
 ```
 
+## Mapbox Token
+
+Create a `.env` file in `client/` with:
+
+```
+VITE_MAPBOX_TOKEN=your_mapbox_token_here
+```
+
 ## 🏗️ Project Structure
 
 ```
