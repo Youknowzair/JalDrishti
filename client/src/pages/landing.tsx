@@ -73,7 +73,7 @@ export default function Landing() {
           </div>
           
           {/* Demo Access Section */}
-          <div className="bg-white rounded-xl shadow-sm p-6 max-w-2xl mx-auto">
+          {/* <div className="bg-white rounded-xl shadow-sm p-6 max-w-2xl mx-auto">
             <h4 className="text-lg font-semibold mb-4 text-center">
               Demo Access | डेमो एक्सेस
             </h4>
@@ -103,7 +103,7 @@ export default function Landing() {
                 {tBilingual('admin')} Demo
               </Button>
             </div>
-          </div>
+          </div> */}
         </div>
 
         {/* Feature Cards */}
