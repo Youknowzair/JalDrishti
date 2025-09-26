@@ -24,18 +24,17 @@ export default function LoginPage() {
 
     try {
       await login(formData.email, formData.password);
-      
+      const storedUser = JSON.parse(localStorage.getItem('jal-drishti-user') || '{}');
+      const role = storedUser?.role || 'community';
       toast({
         title: "Login Successful",
         description: "Welcome to Jal Drishti!",
       });
-      
-      // Redirect to admin dashboard after successful login
-      setLocation("/admin");
+      setLocation(`/${role}`);
     } catch (error) {
       toast({
         title: "Login Failed",
-        description: "Please check your credentials and try again.",
+        description: (error as Error).message || "Please check your credentials and try again.",
         variant: "destructive",
       });
     } finally {
@@ -90,11 +89,7 @@ export default function LoginPage() {
                 />
               </div>
 
-              <Button
-                type="submit"
-                className="w-full"
-                disabled={isLoading}
-              >
+              <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading ? (
                   <div className="flex items-center">
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
